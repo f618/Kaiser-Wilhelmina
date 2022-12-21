@@ -5,94 +5,110 @@
 // --- Hold ANY for LED_OFF - Fade out
 
 #include "Arduino.h"
-#include "AceButton.h"
+#include "OneButton.h"
 
-using namespace ace_button;
+OneButton touch1(6, false);
+OneButton touch2(5, false);
+OneButton touch3(4, false);
+OneButton touch4(3, false);
+OneButton touch5(2, false);
 
-const int LED_ON = HIGH;
-const int LED_OFF = LOW;
+const int ledPins[] = {20, 19, 18, 17, 16};
 
-const uint8_t NUM_LEDS = 5;
+int candleMode = false;
 
-struct Info
-{
-    const uint8_t buttonPin;
-    const uint8_t ledPin;
-    bool ledState;
-};
+void click1();
+void click2();
+void click3();
+void click4();
+void click5();
 
-Info INFOS[NUM_LEDS] = {
-    {6, 20, LED_OFF},
-    {5, 19, LED_OFF},
-    {4, 18, LED_OFF},
-    {3, 17, LED_OFF},
-    {2, 16, LED_OFF},
-};
+void longPress1();
+void longPress2();
+void longPress3();
+void longPress4();
+void longPress5();
 
-AceButton buttons[NUM_LEDS];
-
-void handleEvent(AceButton *, uint8_t, uint8_t);
+void ledsOn();
+void ledsOff();
+void candle();
 
 void setup()
 {
-    delay(100);
     Serial.begin(9600);
+    Serial.println("Kaiser waking");
 
-    while (!Serial)
-        ;
-    Serial.println(F("setup(): begin"));
+    touch3.attachDoubleClick(candle);
 
-    for (uint8_t i = 0; i < NUM_LEDS; i++)
+    touch1.attachClick(click1);
+    touch2.attachClick(click2);
+    touch3.attachClick(click3);
+    touch4.attachClick(click4);
+    touch5.attachClick(click5);
+
+    for (int i = 0; i < 5; i++)
     {
-        pinMode(INFOS[i].ledPin, OUTPUT);
-        pinMode(INFOS[i].buttonPin, INPUT_PULLUP);
-        buttons[i].init(INFOS[i].buttonPin, HIGH, i);
+        pinMode(ledPins[i], OUTPUT);
     }
-
-    ButtonConfig *buttonConfig = ButtonConfig::getSystemButtonConfig();
-    buttonConfig->setEventHandler(handleEvent);
-    buttonConfig->setFeature(ButtonConfig::kFeatureClick);
-    buttonConfig->setFeature(ButtonConfig::kFeatureDoubleClick);
-    buttonConfig->setFeature(ButtonConfig::kFeatureLongPress);
-    buttonConfig->setFeature(ButtonConfig::kFeatureRepeatPress);
-
-    Serial.println(F("setup(): ready"));
 }
+
 void loop()
 {
-
-    for (uint8_t i = 0; i < NUM_LEDS; i++)
-    {
-        buttons[i].check();
-    }
-}
-void handleEvent(AceButton *button, uint8_t eventType, uint8_t buttonState)
-{
-
-    Serial.print(F("handleEvent(): eventType: "));
-    Serial.print(eventType);
-    Serial.print(F("; buttonState: "));
-    Serial.println(buttonState);
-
-    uint8_t id = button->getId();
-    uint8_t ledPin = INFOS[id].ledPin;
-
-    switch (eventType)
-    {
-    case AceButton::kEventPressed: 
-        SetAllLEDs(LED_ON); 
-        break;
-   case AceButton::kEventLongPressed:
-        SetAllLEDs(LED_OFF); 
-        break;
-    }
+    touch1.tick();
+    touch2.tick();
+    touch3.tick();
+    touch4.tick();
+    touch5.tick();
 }
 
-void SetAllLEDs(int newState)
+void ledsOn()
 {
-  for (int id=0; id < NUM_LEDS; id++)
-  {
-    digitalWrite(INFOS[id].ledPin, newState);
-    INFOS[id].ledState = newState;
-  }
+    Serial.println("Lights On");
+    for (int i = 0; i < 5; i++)
+    {
+        digitalWrite(ledPins[i], HIGH);
+    }
+    delay(10);
+}
+
+void candle()
+{
+    Serial.println("Candle");
+    for (int i = 0; i < 5; i++)
+    {
+        analogWrite(ledPins[i], random(120) + 135);
+    }
+    if (candleMode != false)
+    {
+        candle();
+    }
+}
+void click1()
+{
+    Serial.println("Touch 1 CLICK");
+    ledsOn();
+}
+
+void click2()
+{
+    Serial.println("Touch 2 CLICK");
+    ledsOn();
+}
+
+void click3()
+{
+    Serial.println("Touch 3 CLICK");
+    ledsOn();
+}
+
+void click4()
+{
+    Serial.println("Touch 4 CLICK");
+    ledsOn();
+}
+
+void click5()
+{
+    Serial.println("Touch 5 CLICK");
+    ledsOn();
 }
