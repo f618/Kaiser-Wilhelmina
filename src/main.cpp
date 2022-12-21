@@ -13,43 +13,42 @@ OneButton touch3(4, false);
 OneButton touch4(3, false);
 OneButton touch5(2, false);
 
-const int ledPins[] = {20, 19, 18, 17, 16};
+const int LEDone = 20;
+const int LEDtwo = 19;
+const int LEDthree = 18;
+const int LEDfour = 17;
+const int LEDfive = 16;
 
-int candleMode = false;
+const int pwmIntervals = 50;
 
-void click1();
-void click2();
-void click3();
-void click4();
-void click5();
+void touch();
 
-void longPress1();
-void longPress2();
-void longPress3();
-void longPress4();
-void longPress5();
+typedef enum
+{
+    LED_OFF,
+    LED_ON,
+} MyActions;
 
-void ledsOn();
-void ledsOff();
-void candle();
+MyActions nextAction = LED_OFF;
+
+int previous = 0;
+
+float R;
 
 void setup()
 {
     Serial.begin(9600);
-    Serial.println("Kaiser waking");
+    Serial.println("Kaiser's waking..");
 
-    touch3.attachDoubleClick(candle);
+    touch1.attachClick(touch);
+    touch2.attachClick(touch);
+    touch3.attachClick(touch);
+    touch4.attachClick(touch);
+    touch5.attachClick(touch);
 
-    touch1.attachClick(click1);
-    touch2.attachClick(click2);
-    touch3.attachClick(click3);
-    touch4.attachClick(click4);
-    touch5.attachClick(click5);
+    R = (pwmIntervals * log10(2)) / (log10(255));
 
-    for (int i = 0; i < 5; i++)
-    {
-        pinMode(ledPins[i], OUTPUT);
-    }
+    delay(50);
 }
 
 void loop()
@@ -59,56 +58,44 @@ void loop()
     touch3.tick();
     touch4.tick();
     touch5.tick();
-}
 
-void ledsOn()
-{
-    Serial.println("Lights On");
-    for (int i = 0; i < 5; i++)
+    int brightness = 0;
+
+    if ((nextAction == LED_OFF) && (previous == 1))
     {
-        digitalWrite(ledPins[i], HIGH);
+        Serial.println("Kaiser's eyes are heavy..");
+        for (int interval = 0; interval <= pwmIntervals; interval++)
+        {
+            brightness = pow(2, (-(interval - pwmIntervals) / R)) - 1;
+            analogWrite(LEDone, brightness);
+            analogWrite(LEDtwo, brightness);
+            analogWrite(LEDthree, brightness);
+            analogWrite(LEDfour, brightness);
+            analogWrite(LEDfive, brightness);
+            delay(10);
+        }
+        previous = 0;
     }
-    delay(10);
-}
-
-void candle()
-{
-    Serial.println("Candle");
-    for (int i = 0; i < 5; i++)
+    else if ((nextAction == LED_ON) && (previous == 0))
     {
-        analogWrite(ledPins[i], random(120) + 135);
+        Serial.println("Kaiser's eyes shine bright..");
+        for (int interval = 0; interval <= pwmIntervals; interval++)
+        {
+            brightness = pow(2, (interval / R)) - 1;
+            analogWrite(LEDone, brightness);
+            analogWrite(LEDtwo, brightness);
+            analogWrite(LEDthree, brightness);
+            analogWrite(LEDfour, brightness);
+            analogWrite(LEDfive, brightness);
+            delay(10);
+        }
+        previous = 1;
     }
-    if (candleMode != false)
-    {
-        candle();
-    }
 }
-void click1()
+void touch()
 {
-    Serial.println("Touch 1 CLICK");
-    ledsOn();
-}
-
-void click2()
-{
-    Serial.println("Touch 2 CLICK");
-    ledsOn();
-}
-
-void click3()
-{
-    Serial.println("Touch 3 CLICK");
-    ledsOn();
-}
-
-void click4()
-{
-    Serial.println("Touch 4 CLICK");
-    ledsOn();
-}
-
-void click5()
-{
-    Serial.println("Touch 5 CLICK");
-    ledsOn();
+    if (nextAction == LED_OFF)
+        nextAction = LED_ON;
+    else
+        nextAction = LED_OFF;
 }
