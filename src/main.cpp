@@ -1,8 +1,5 @@
 // Kaiser Wilhelmina
 // Controller
-// --- Press ANY for LED_ON - Fade in
-// --- Press 5 + 6 at once for CANDLE_MODE
-// --- Hold ANY for LED_OFF - Fade out
 
 #include "Arduino.h"
 #include "OneButton.h"
@@ -21,7 +18,13 @@ const int LEDfive = 16;
 
 const int pwmIntervals = 50;
 
+const int minBrightness = 80;
+const int maxBrightness = 240;
+
+int brightness = 0;
+
 void touch();
+void longSTART();
 
 typedef enum
 {
@@ -31,8 +34,9 @@ typedef enum
 
 MyActions nextAction = LED_OFF;
 
+int brightened = 0;
 int previous = 0;
-
+int longTOUCH = 0;
 float R;
 
 void setup()
@@ -46,7 +50,13 @@ void setup()
     touch4.attachClick(touch);
     touch5.attachClick(touch);
 
-    R = (pwmIntervals * log10(2)) / (log10(255));
+    touch1.attachLongPressStart(longSTART);
+    touch2.attachLongPressStart(longSTART);
+    touch3.attachLongPressStart(longSTART);
+    touch4.attachLongPressStart(longSTART);
+    touch5.attachLongPressStart(longSTART);
+
+    R = (pwmIntervals * log10(2)) / (log10(minBrightness));
 
     delay(50);
 }
@@ -59,11 +69,8 @@ void loop()
     touch4.tick();
     touch5.tick();
 
-    int brightness = 0;
-
     if ((nextAction == LED_OFF) && (previous == 1))
     {
-        Serial.println("Kaiser's eyes are heavy..");
         for (int interval = 0; interval <= pwmIntervals; interval++)
         {
             brightness = pow(2, (-(interval - pwmIntervals) / R)) - 1;
@@ -74,11 +81,12 @@ void loop()
             analogWrite(LEDfive, brightness);
             delay(10);
         }
+        Serial.println("Kaiser's eyes shrink:  " + String(brightness) + "..");
+        Serial.println("Kaiser's eyes are heavy..");
         previous = 0;
     }
     else if ((nextAction == LED_ON) && (previous == 0))
     {
-        Serial.println("Kaiser's eyes shine bright..");
         for (int interval = 0; interval <= pwmIntervals; interval++)
         {
             brightness = pow(2, (interval / R)) - 1;
@@ -89,7 +97,42 @@ void loop()
             analogWrite(LEDfive, brightness);
             delay(10);
         }
+        Serial.println("Kaiser's eyes open: " + String(brightness) + "..");
+        Serial.println("Kaiser's eyes shine bright..");
         previous = 1;
+    }
+    while ((longTOUCH == 1) && (previous == 1))
+    {
+        if (brightness <= maxBrightness)
+        {
+            for (brightness; brightness <= maxBrightness; brightness++)
+            {
+                analogWrite(LEDone, brightness);
+                analogWrite(LEDtwo, brightness);
+                analogWrite(LEDthree, brightness);
+                analogWrite(LEDfour, brightness);
+                analogWrite(LEDfive, brightness);
+                delay(10);
+            }
+            Serial.println("Kaiser's eyes open: " + String(brightness) + "..");
+            Serial.println("Kaiser's eyes shine even brighter..");
+            longTOUCH = 0;
+        }
+        else
+        {
+            for (brightness; brightness >= minBrightness; brightness--)
+            {
+                analogWrite(LEDone, brightness);
+                analogWrite(LEDtwo, brightness);
+                analogWrite(LEDthree, brightness);
+                analogWrite(LEDfour, brightness);
+                analogWrite(LEDfive, brightness);
+                delay(10);
+            }
+            Serial.println("Kaiser's eyes shrink: " + String(brightness) + "..");
+            Serial.println("Kaiser's return to normal..");
+            longTOUCH = 0;
+        }
     }
 }
 void touch()
@@ -98,4 +141,9 @@ void touch()
         nextAction = LED_ON;
     else
         nextAction = LED_OFF;
+}
+
+void longSTART()
+{
+    longTOUCH = 1;
 }
